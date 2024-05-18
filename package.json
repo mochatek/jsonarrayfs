@@ -1,0 +1,21 @@
+{
+  "name": "jsonfs",
+  "version": "1.0.0",
+  "description": "Stream items from JSON file",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "ts-node tests/index.ts"
+  },
+  "keywords": [
+    "JSON",
+    "stream"
+  ],
+  "author": "MochaTek",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^20.12.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
