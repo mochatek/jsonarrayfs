@@ -1,13 +1,16 @@
 {
   "compilerOptions": {
+    "target": "ES6",
     "module": "CommonJS",
-    "esModuleInterop": true,
-    "target": "ES2021",
     "moduleResolution": "Node",
-    "outDir": "dist",                          
     "rootDir": "src",
-    "strict": true,         
+    "outDir": "dist",
+    "strict": true,
+    "declaration": true,
     "noImplicitAny": true,
+    "esModuleInterop": true,
+    "skipDefaultLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
   },
-  "exclude": ["tests"]
+  "include": ["src/**/*.ts"]
 }

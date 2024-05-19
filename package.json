@@ -1,18 +1,26 @@
 {
   "name": "jsonfs",
   "version": "1.0.0",
-  "description": "Stream items from JSON file",
+  "description": "A Node.js library for streaming JSON array data from files, with utilities for chunking JSON array elements into manageable sizes.",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "ts-node tests/index.ts"
+    "test": "ts-node tests/index.test.ts"
   },
   "keywords": [
-    "JSON",
-    "stream"
+    "json",
+    "stream",
+    "json array",
+    "chunk",
+    "batch"
   ],
-  "author": "MochaTek",
+  "author": "Akash S Panickar",
   "license": "ISC",
+  "homepage": "https://github.com/mochatek",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mochatek/jsonfs.git"
+  },
   "dependencies": {
     "@types/node": "^20.12.12",
     "ts-node": "^10.9.2",
