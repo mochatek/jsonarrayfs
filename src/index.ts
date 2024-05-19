@@ -21,9 +21,17 @@ type ReadStreamOptions = {
   signal?: AbortSignal;
 };
 
+type ElementType = "array" | "object";
+
 const CHARACTER = {
-  OPEN_BRACKET: `[`,
-  CLOSE_BRACKET: `]`,
+  BRACKET: {
+    OPEN: `[`,
+    CLOSE: `]`,
+  },
+  BRACE: {
+    OPEN: `{`,
+    CLOSE: `}`,
+  },
   QUOTE: `"`,
   ESCAPE: `\\`,
 };
@@ -51,52 +59,50 @@ async function createReadableFileStream(
   return { stream, chunkGenerator };
 }
 
-async function createJsonChunkStream<T extends any[]>(
+async function createJsonChunkStream<T extends any[] | Record<any, any>>(
   path: string,
+  elementType: ElementType,
   options?: ReadStreamOptions
 ) {
   const { stream, chunkGenerator } = await createReadableFileStream(
     path,
     options
   );
+  const ELEMENT_WRAPPER =
+    elementType === "object" ? CHARACTER.BRACE : CHARACTER.BRACKET;
 
   return async function* (chunkSize: number) {
     let rootDetected = false;
-    let bracketCount = 0;
+    let elementWrapperCount = 0;
     let insideQuotes = false;
     let isEscaped = false;
     let chunkBuffer = "";
     let resultBuffer: T[] = [];
 
-    for await (const chunk of chunkGenerator()) {
+    readChunks: for await (const chunk of chunkGenerator()) {
       for (let char of chunk) {
-        if (char === CHARACTER.OPEN_BRACKET && !insideQuotes) {
-          if (!rootDetected) {
-            rootDetected = true;
-            continue;
-          } else {
-            chunkBuffer = `${chunkBuffer}${char}`;
-            bracketCount += 1;
-          }
-        } else if (char === CHARACTER.CLOSE_BRACKET && !insideQuotes) {
+        if (char === CHARACTER.BRACKET.OPEN && !rootDetected) {
+          rootDetected = true;
+          continue;
+        } else if (char === CHARACTER.BRACKET.CLOSE && !elementWrapperCount) {
+          if (!resultBuffer.length) break readChunks;
+
+          yield resultBuffer.splice(0, chunkSize);
+        } else if (char === ELEMENT_WRAPPER.OPEN && !insideQuotes) {
           chunkBuffer = `${chunkBuffer}${char}`;
-          bracketCount -= 1;
+          elementWrapperCount += 1;
+        } else if (char === ELEMENT_WRAPPER.CLOSE && !insideQuotes) {
+          chunkBuffer = `${chunkBuffer}${char}`;
+          elementWrapperCount -= 1;
 
-          if (bracketCount < 0) {
-            if (!resultBuffer.length) break;
-
-            yield resultBuffer;
-            resultBuffer = [];
-          } else if (bracketCount === 0) {
-            const subArray: T = JSON.parse(chunkBuffer);
-            resultBuffer.push(subArray);
+          if (elementWrapperCount === 0) {
+            const element: T = JSON.parse(chunkBuffer);
+            resultBuffer.push(element);
             chunkBuffer = "";
 
             if (resultBuffer.length === chunkSize) {
               if (!stream.closed) stream.pause();
-
-              yield resultBuffer;
-              resultBuffer = [];
+              yield resultBuffer.splice(0, chunkSize);
               if (!stream.closed) stream.resume();
             }
           }
