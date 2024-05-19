@@ -24,14 +24,19 @@ type ReadStreamOptions = {
 const CHARACTER = {
   OPEN_BRACKET: `[`,
   CLOSE_BRACKET: `]`,
+  QUOTE: `"`,
+  ESCAPE: `\\`,
 };
 
-async function createReadableFileStream(path: string, options?: ReadStreamOptions) {
+async function createReadableFileStream(
+  path: string,
+  options?: ReadStreamOptions
+) {
   if (!options) {
-    options = {}
+    options = {};
   }
   if (!options.encoding) {
-    options.encoding = 'utf-8'
+    options.encoding = "utf-8";
   }
 
   const stream = createReadStream(path, options);
@@ -50,17 +55,22 @@ async function createJsonChunkStream<T extends any[]>(
   path: string,
   options?: ReadStreamOptions
 ) {
-  const { stream, chunkGenerator } = await createReadableFileStream(path, options);
+  const { stream, chunkGenerator } = await createReadableFileStream(
+    path,
+    options
+  );
 
   return async function* (chunkSize: number) {
     let rootDetected = false;
     let bracketCount = 0;
+    let insideQuotes = false;
+    let isEscaped = false;
     let chunkBuffer = "";
     let resultBuffer: T[] = [];
 
     for await (const chunk of chunkGenerator()) {
       for (let char of chunk) {
-        if (char === CHARACTER.OPEN_BRACKET) {
+        if (char === CHARACTER.OPEN_BRACKET && !insideQuotes) {
           if (!rootDetected) {
             rootDetected = true;
             continue;
@@ -68,7 +78,7 @@ async function createJsonChunkStream<T extends any[]>(
             chunkBuffer = `${chunkBuffer}${char}`;
             bracketCount += 1;
           }
-        } else if (char === CHARACTER.CLOSE_BRACKET) {
+        } else if (char === CHARACTER.CLOSE_BRACKET && !insideQuotes) {
           chunkBuffer = `${chunkBuffer}${char}`;
           bracketCount -= 1;
 
@@ -92,6 +102,14 @@ async function createJsonChunkStream<T extends any[]>(
           }
         } else if (chunkBuffer.length) {
           chunkBuffer = `${chunkBuffer}${char}`;
+
+          if (char === CHARACTER.ESCAPE) {
+            isEscaped = !isEscaped;
+          } else if (char === CHARACTER.QUOTE && !isEscaped) {
+            insideQuotes = !insideQuotes;
+          } else if (isEscaped) {
+            isEscaped = false;
+          }
         }
       }
     }
