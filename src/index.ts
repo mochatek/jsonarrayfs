@@ -83,11 +83,18 @@ class JsonArrayStreamer<T> {
   }
 
   private primitiveElementParser(char: string) {
-    
+    if ([CHARACTER.COMMA, CHARACTER.BRACKET.CLOSE].includes(char)) {
+      const element = JSON.parse(this.chunkBuffer);
+      this.resultBuffer.push(element);
+      this.resetParser();
+    } else {
+      this.chunkBuffer = `${this.chunkBuffer}${char}`;
+    }
   }
 
   private containerElementParser(char: string) {
-    const ENCLOSURE = this.elementType === 'array'? CHARACTER.BRACKET: CHARACTER.BRACE;
+    const ENCLOSURE =
+      this.elementType === "array" ? CHARACTER.BRACKET : CHARACTER.BRACE;
 
     if (char === ENCLOSURE.OPEN && !this.isCharInsideQuotes) {
       this.chunkBuffer = `${this.chunkBuffer}${char}`;
@@ -163,9 +170,9 @@ class JsonArrayStreamer<T> {
     this.readStream = null;
 
     if (this.chunkBuffer.length) {
-      const element = JSON.parse(this.chunkBuffer)
-      this.resultBuffer.push(element)
-      this.resetParser()
+      const element = JSON.parse(this.chunkBuffer);
+      this.resultBuffer.push(element);
+      this.resetParser();
     }
     if (this.resultBuffer.length) {
       yield this.resultBuffer.splice(0);
