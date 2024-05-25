@@ -82,6 +82,26 @@ class JsonArrayStreamer<T> {
     this.chunkBuffer = "";
   }
 
+  private stringElementParser(char: string) {
+    this.chunkBuffer = `${this.chunkBuffer}${char}`;
+
+    if (char === CHARACTER.QUOTE) {
+      if (this.isCharInsideQuotes && !this.isCharEscaped) {
+        const element = JSON.parse(this.chunkBuffer);
+        this.resultBuffer.push(element);
+        this.resetParser();
+      } else if (this.chunkBuffer === CHARACTER.QUOTE) {
+        this.isCharInsideQuotes = true;
+      } else if (this.isCharEscaped) {
+        this.isCharEscaped = false;
+      }
+    } else if (char === CHARACTER.ESCAPE) {
+      this.isCharEscaped = !this.isCharEscaped;
+    } else if (this.isCharEscaped) {
+      this.isCharEscaped = false;
+    }
+  }
+
   private primitiveElementParser(char: string) {
     if ([CHARACTER.COMMA, CHARACTER.BRACKET.CLOSE].includes(char)) {
       const element = JSON.parse(this.chunkBuffer);
@@ -148,7 +168,7 @@ class JsonArrayStreamer<T> {
               this.elementParser = this.containerElementParser;
             } else if (char === CHARACTER.QUOTE) {
               this.elementType = "string";
-              this.elementParser = this.primitiveElementParser;
+              this.elementParser = this.stringElementParser;
             } else {
               this.elementType = "others";
               this.elementParser = this.primitiveElementParser;
