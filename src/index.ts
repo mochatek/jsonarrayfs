@@ -1,43 +1,7 @@
 import { ReadStream, createReadStream } from "fs";
 import { once } from "events";
-
-type BufferEncoding =
-  | "ascii"
-  | "utf8"
-  | "utf-8"
-  | "utf16le"
-  | "utf-16le"
-  | "ucs2"
-  | "ucs-2"
-  | "base64"
-  | "base64url"
-  | "latin1"
-  | "binary"
-  | "hex";
-
-type ReadStreamOptions = {
-  encoding?: BufferEncoding;
-  highWaterMark?: number;
-  signal?: AbortSignal;
-};
-
-type ElementType = "array" | "object" | "string" | "others";
-
-const CHARACTER = {
-  BRACKET: {
-    OPEN: `[`,
-    CLOSE: `]`,
-  },
-  BRACE: {
-    OPEN: `{`,
-    CLOSE: `}`,
-  },
-  QUOTE: `"`,
-  ESCAPE: `\\`,
-  SPACE: " ",
-  COMMA: ",",
-  NEW_LINE: "\n",
-};
+import { ElementType, ReadStreamOptions } from "./index.types";
+import { CHARACTER } from "./constants";
 
 class JsonArrayStreamer<T> {
   private readStream: ReadStream | null;
@@ -87,7 +51,7 @@ class JsonArrayStreamer<T> {
 
     if (char === CHARACTER.QUOTE) {
       if (this.isCharInsideQuotes && !this.isCharEscaped) {
-        const element = JSON.parse(this.chunkBuffer);
+        const element: T = JSON.parse(this.chunkBuffer);
         this.resultBuffer.push(element);
         this.resetParser();
       } else if (this.chunkBuffer === CHARACTER.QUOTE) {
@@ -104,7 +68,7 @@ class JsonArrayStreamer<T> {
 
   private primitiveElementParser(char: string) {
     if ([CHARACTER.COMMA, CHARACTER.BRACKET.CLOSE].includes(char)) {
-      const element = JSON.parse(this.chunkBuffer);
+      const element: T = JSON.parse(this.chunkBuffer);
       this.resultBuffer.push(element);
       this.resetParser();
     } else {
@@ -124,7 +88,7 @@ class JsonArrayStreamer<T> {
       this.elementEnclosureCount -= 1;
 
       if (this.elementEnclosureCount === 0) {
-        const element = JSON.parse(this.chunkBuffer);
+        const element: T = JSON.parse(this.chunkBuffer);
         this.resultBuffer.push(element);
         this.resetParser();
       }
