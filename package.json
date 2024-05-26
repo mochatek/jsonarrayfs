@@ -1,7 +1,7 @@
 {
   "name": "jsonfs",
   "version": "1.0.0",
-  "description": "A Node.js library for streaming JSON array data from files, with utilities for chunking JSON array elements into manageable sizes.",
+  "description": "A Node.js library to stream JSON array elements from files in custom-sized chunks and effortlessly append data to existing arrays.",
   "exports": {
     ".": {
       "require": "./dist/index.js",
