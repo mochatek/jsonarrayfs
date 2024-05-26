@@ -1,0 +1,30 @@
+# This workflow will build the publish the jsonarrayfs package to NPM when a version-tagged commit is pushed
+
+name: Publish jsonarrayfs library to NPM
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-publish:
+    name: Build dist from source and publish the artifacts to NPM
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@master
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "18.x"
+          registry-url: "https://registry.npmjs.org"
+      - name: Install dependencies and build
+        run: npm ci && npm run build
+      - name: Publish package to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

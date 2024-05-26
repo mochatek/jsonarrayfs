@@ -23,7 +23,8 @@
     "stream",
     "json array",
     "chunk",
-    "batch"
+    "batch",
+    "append json"
   ],
   "author": "Akash S Panickar",
   "license": "MIT",
