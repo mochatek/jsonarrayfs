@@ -2,9 +2,20 @@
   "name": "jsonfs",
   "version": "1.0.0",
   "description": "A Node.js library for streaming JSON array data from files, with utilities for chunking JSON array elements into manageable sizes.",
-  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsup",
     "test": "ts-node tests/index.test.ts"
   },
   "keywords": [
@@ -15,15 +26,19 @@
     "batch"
   ],
   "author": "Akash S Panickar",
-  "license": "ISC",
+  "license": "MIT",
   "homepage": "https://github.com/mochatek",
   "repository": {
     "type": "git",
     "url": "https://github.com/mochatek/jsonfs.git"
   },
-  "dependencies": {
+  "devDependencies": {
     "@types/node": "^20.12.12",
     "ts-node": "^10.9.2",
+    "tsup": "^8.0.2",
     "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=10.0.0"
   }
 }
