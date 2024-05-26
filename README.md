@@ -18,7 +18,7 @@ npm install jsonarrayfs
 import { createReadStream } from "jsonarrayfs";
 
 // Create a streamer to read JSON array elements from a file
-const streamer = await createReadStream("./data.json");
+const streamer = await createReadStream("./data.json", { encoding: 'utf-8' });
 
 // Stream JSON array elements in batches of 100
 for await (const chunk of streamer.stream(100)) {
@@ -38,7 +38,7 @@ const newData = [
 ];
 
 // Append new data to the existing JSON array file
-await appendFile("./data.json", ...newData);
+await appendFile("./data.json", 'utf-8', ...newData);
 ```
 
 ## Contributing
