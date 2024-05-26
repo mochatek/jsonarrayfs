@@ -1,6 +1,6 @@
 {
   "name": "jsonarrayfs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Node.js library to stream JSON array elements from files in custom-sized chunks and effortlessly append data to existing arrays.",
   "exports": {
     ".": {
