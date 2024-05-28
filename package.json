@@ -1,7 +1,7 @@
 {
   "name": "jsonarrayfs",
   "version": "1.0.1",
-  "description": "A Node.js library to stream JSON array elements from files in custom-sized chunks and effortlessly append data to existing arrays.",
+  "description": "Efficiently handle JSON array files in Node.js with minimal memory usage. Perfect for efficiently processing large data volumes without worrying about memory limitations.",
   "exports": {
     ".": {
       "require": "./dist/index.js",
@@ -21,10 +21,17 @@
   "keywords": [
     "json",
     "stream",
-    "json array",
     "chunk",
     "batch",
-    "append json"
+    "json file handling",
+    "json array",
+    "json stream",
+    "stream filter",
+    "json append",
+    "stream processing",
+    "on the fly filtering",
+    "direct appends",
+    "memory efficient"
   ],
   "author": "Akash S Panickar",
   "license": "MIT",
