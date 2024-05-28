@@ -1,6 +1,6 @@
 {
   "name": "jsonarrayfs",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Efficiently handle JSON array files in Node.js with minimal memory usage. Perfect for efficiently processing large data volumes without worrying about memory limitations.",
   "exports": {
     ".": {
