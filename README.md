@@ -2,20 +2,22 @@
 
 "jsonarrayfs" is a Node.js library crafted for robust and memory-efficient management of massive JSON array files. It enables seamless handling of JSON arrays without the need to load the entire file into memory, making it perfect for efficiently managing large datasets without overwhelming system resources.
 
-## Key Features
+## 🎯 Key Features
 
 - **Stream Processing**: Read JSON array in manageable chunks (eg: 50k elements at a time) using stream.
 - **On-the-Fly Filtering**: Apply filter to the stream to fetch only relevant data, reducing the data you handle even further.
 - **Direct Appends**: Append new elements directly to the JSON array file, avoiding unnecessary loading, modification and rewriting.
+- **Formatting Flexibility**: Works regardless of whether the JSON file is formatted with proper indentation or not.
+- **Handles Mixed Types**: Can handle JSON arrays containing both uniform and mixed types of elements.
 
-## Benefits
+## 💡 Benefits
 
 - **Memory Optimization**: Process JSON array files with minimal memory usage, making it ideal for resource-constrained environments.
 - **Handles Large Datasets**: Efficiently manage massive JSON array files without memory limitations.
 - **Improved Performance**: Faster processing times due to efficient streaming, filtering and appending capabilities.
 - **Enhanced Scalability**: Scales seamlessly with growing datasets, ensuring smooth performance.
 
-## Installation
+## ⚙️ Installation
 
 To install jsonarrayfs, use:
 
@@ -23,7 +25,7 @@ To install jsonarrayfs, use:
 npm install jsonarrayfs
 ```
 
-## Usage
+## 🚀 Usage
 
 - Stream Processing:
 
@@ -73,10 +75,10 @@ const newData = [
 await appendFile("./data.json", "utf-8", ...newData);
 ```
 
-## Contributing
+## 🤝 Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-## License
+## 📜 License
 
 [MIT License ](https://github.com/mochatek/jsonarrayfs/blob/main/LICENSE)
