@@ -1,6 +1,6 @@
 import { ReadStream, createReadStream } from "fs";
 import { once } from "events";
-import { ElementType, ReadStreamOptions } from "../index.types";
+import type { ElementType, ReadStreamOptions } from "../index.types";
 import { CHARACTER } from "../constants";
 
 class JsonArrayStreamer<T> {
