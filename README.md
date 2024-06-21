@@ -1,4 +1,4 @@
-# jsonarrayfs <img src="https://img.shields.io/npm/dm/jsonarrayfs" />
+# jsonarrayfs <img alt="NPM Version" src="https://img.shields.io/npm/v/jsonarrayfs"> <img alt="Monthly Downloads" src="https://img.shields.io/npm/dm/jsonarrayfs" /> <img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/mochatek/jsonarrayfs/publish-to-npm.yml">
 
 "jsonarrayfs" is a Node.js library crafted for robust and memory-efficient management of massive JSON array files. It enables seamless handling of JSON arrays without the need to load the entire file into memory, making it perfect for efficiently managing large datasets without overwhelming system resources.
 
