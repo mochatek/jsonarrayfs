@@ -1,5 +1,5 @@
 import { stat, open, FileHandle } from "fs/promises";
-import { CHARACTER } from "../constants";
+import { CHARACTER, ERRORS } from "../constants";
 
 const appendToJsonArray = async (
   filePath: string,
@@ -28,6 +28,10 @@ const appendToJsonArray = async (
           insertPosition +=
             i === 0 ? 0 : Buffer.byteLength(windowValue.slice(0, i), encoding);
           break searchForArrayEnd;
+        } else if (
+          ![CHARACTER.NEW_LINE, CHARACTER.SPACE].includes(windowValue[i])
+        ) {
+          throw new Error(ERRORS.INVALID_FILE);
         }
       }
     }
