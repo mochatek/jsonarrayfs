@@ -1,7 +1,7 @@
 import { ReadStream, createReadStream } from "fs";
 import { once } from "events";
 import type { ElementType, ReadStreamOptions } from "../index.types";
-import { CHARACTER } from "../constants";
+import { CHARACTER, ERRORS } from "../constants";
 
 class JsonArrayStreamer<T> {
   private readStream: ReadStream | null;
@@ -41,6 +41,15 @@ class JsonArrayStreamer<T> {
     }
   }
 
+  private getParsedElement<T>() {
+    try {
+      const element: T = JSON.parse(this.chunkBuffer);
+      return element;
+    } catch (error) {
+      throw new Error(ERRORS.INVALID_ELEMENT(this.chunkBuffer));
+    }
+  }
+
   private addToResult(element: T, filter?: (element: T) => boolean) {
     if (!filter) {
       this.resultBuffer.push(element);
@@ -66,7 +75,7 @@ class JsonArrayStreamer<T> {
 
     if (char === CHARACTER.QUOTE) {
       if (this.isCharInsideQuotes && !this.isCharEscaped) {
-        const element: T = JSON.parse(this.chunkBuffer);
+        const element = <T>this.getParsedElement();
         this.addToResult(element, filter);
         this.resetParser();
       } else if (this.chunkBuffer === CHARACTER.QUOTE) {
@@ -85,8 +94,8 @@ class JsonArrayStreamer<T> {
     char: string,
     filter?: (element: T) => boolean
   ) {
-    if ([CHARACTER.COMMA, CHARACTER.BRACKET.CLOSE].includes(char)) {
-      const element: T = JSON.parse(this.chunkBuffer);
+    if (char === CHARACTER.COMMA) {
+      const element = <T>this.getParsedElement();
       this.addToResult(element, filter);
       this.resetParser();
     } else {
@@ -109,7 +118,7 @@ class JsonArrayStreamer<T> {
       this.elementEnclosureCount -= 1;
 
       if (this.elementEnclosureCount === 0) {
-        const element: T = JSON.parse(this.chunkBuffer);
+        const element = <T>this.getParsedElement();
         this.addToResult(element, filter);
         this.resetParser();
       }
@@ -127,19 +136,29 @@ class JsonArrayStreamer<T> {
   }
 
   public async *stream(chunkSize: number, filter?: (element: T) => boolean) {
-    for await (const chunk of this.chunkGenerator()) {
+    characterStream: for await (const chunk of this.chunkGenerator()) {
       for (let char of chunk) {
         if (!this.rootDetected) {
+          if (
+            ![
+              CHARACTER.SPACE,
+              CHARACTER.NEW_LINE,
+              CHARACTER.BRACKET.OPEN,
+            ].includes(char)
+          )
+            throw new Error(ERRORS.INVALID_FILE);
+
           this.rootDetected = char === CHARACTER.BRACKET.OPEN;
           continue;
         }
 
         if (!this.elementDetected) {
+          if (char === CHARACTER.BRACKET.CLOSE) break characterStream;
+
           this.elementDetected = ![
             CHARACTER.SPACE,
             CHARACTER.COMMA,
             CHARACTER.NEW_LINE,
-            CHARACTER.BRACKET.CLOSE,
           ].includes(char);
         }
 
@@ -158,6 +177,11 @@ class JsonArrayStreamer<T> {
               this.elementType = "others";
               this.elementParser = this.primitiveElementParser;
             }
+          } else if (
+            this.elementParser === this.primitiveElementParser &&
+            char === CHARACTER.BRACKET.CLOSE
+          ) {
+            break characterStream;
           }
 
           this.elementParser(char, filter);
@@ -175,7 +199,7 @@ class JsonArrayStreamer<T> {
     this.readStream = null;
 
     if (this.chunkBuffer.length) {
-      const element: T = JSON.parse(this.chunkBuffer);
+      const element = <T>this.getParsedElement();
       this.addToResult(element, filter);
       this.resetParser();
     }

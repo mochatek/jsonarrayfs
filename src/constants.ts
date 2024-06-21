@@ -14,4 +14,10 @@ const CHARACTER = {
   NEW_LINE: "\n",
 };
 
-export { CHARACTER };
+const ERRORS = {
+  INVALID_FILE: "Invalid JSON array file",
+  INVALID_ELEMENT: (element: string) =>
+    `Invalid element found in JSON array - ${element}`,
+};
+
+export { CHARACTER, ERRORS };
