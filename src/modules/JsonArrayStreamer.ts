@@ -136,78 +136,86 @@ class JsonArrayStreamer<T> {
   }
 
   public async *stream(chunkSize: number, filter?: (element: T) => boolean) {
-    characterStream: for await (const chunk of this.chunkGenerator()) {
-      for (let char of chunk) {
-        if (!this.rootDetected) {
-          if (
-            ![
-              CHARACTER.SPACE,
-              CHARACTER.NEW_LINE,
-              CHARACTER.BRACKET.OPEN,
-            ].includes(char)
-          )
-            throw new Error(ERRORS.INVALID_FILE);
+    try {
+      characterStream: for await (const chunk of this.chunkGenerator()) {
+        for (let char of chunk) {
+          if (!this.rootDetected) {
+            if (
+              ![
+                CHARACTER.SPACE,
+                CHARACTER.NEW_LINE,
+                CHARACTER.BRACKET.OPEN,
+              ].includes(char)
+            )
+              throw new Error(ERRORS.INVALID_FILE);
 
-          this.rootDetected = char === CHARACTER.BRACKET.OPEN;
-          continue;
-        }
-
-        if (!this.elementDetected) {
-          if (char === CHARACTER.BRACKET.CLOSE) break characterStream;
-
-          this.elementDetected = ![
-            CHARACTER.SPACE,
-            CHARACTER.COMMA,
-            CHARACTER.NEW_LINE,
-          ].includes(char);
-        }
-
-        if (this.elementDetected) {
-          if (!this.elementParser) {
-            if (char === CHARACTER.BRACKET.OPEN) {
-              this.elementType = "array";
-              this.elementParser = this.containerElementParser;
-            } else if (char === CHARACTER.BRACE.OPEN) {
-              this.elementType = "object";
-              this.elementParser = this.containerElementParser;
-            } else if (char === CHARACTER.QUOTE) {
-              this.elementType = "string";
-              this.elementParser = this.stringElementParser;
-            } else {
-              this.elementType = "others";
-              this.elementParser = this.primitiveElementParser;
-            }
-          } else if (
-            this.elementParser === this.primitiveElementParser &&
-            char === CHARACTER.BRACKET.CLOSE
-          ) {
-            break characterStream;
+            this.rootDetected = char === CHARACTER.BRACKET.OPEN;
+            continue;
           }
 
-          this.elementParser(char, filter);
+          if (!this.elementDetected) {
+            if (char === CHARACTER.BRACKET.CLOSE) break characterStream;
 
-          if (this.resultBuffer.length === chunkSize) {
-            if (!this.readStream?.closed) this.readStream?.pause();
-            yield this.resultBuffer.splice(0, chunkSize);
-            if (!this.readStream?.closed) this.readStream?.resume();
+            this.elementDetected = ![
+              CHARACTER.SPACE,
+              CHARACTER.COMMA,
+              CHARACTER.NEW_LINE,
+            ].includes(char);
+          }
+
+          if (this.elementDetected) {
+            if (!this.elementParser) {
+              if (char === CHARACTER.BRACKET.OPEN) {
+                this.elementType = "array";
+                this.elementParser = this.containerElementParser;
+              } else if (char === CHARACTER.BRACE.OPEN) {
+                this.elementType = "object";
+                this.elementParser = this.containerElementParser;
+              } else if (char === CHARACTER.QUOTE) {
+                this.elementType = "string";
+                this.elementParser = this.stringElementParser;
+              } else {
+                this.elementType = "others";
+                this.elementParser = this.primitiveElementParser;
+              }
+            } else if (
+              this.elementParser === this.primitiveElementParser &&
+              char === CHARACTER.BRACKET.CLOSE
+            ) {
+              break characterStream;
+            }
+
+            this.elementParser(char, filter);
+
+            if (this.resultBuffer.length === chunkSize) {
+              if (!this.readStream?.closed) this.readStream?.pause();
+              yield this.resultBuffer.splice(0, chunkSize);
+              if (!this.readStream?.closed) this.readStream?.resume();
+            }
           }
         }
       }
-    }
 
-    this.readStream?.close();
-    this.readStream = null;
+      this.readStream?.close();
+      this.readStream = null;
 
-    if (this.chunkBuffer.length) {
-      const element = <T>this.getParsedElement();
-      this.addToResult(element, filter);
+      if (this.chunkBuffer.length) {
+        const element = <T>this.getParsedElement();
+        this.addToResult(element, filter);
+        this.resetParser();
+      }
+      if (this.resultBuffer.length) {
+        yield this.resultBuffer.splice(0);
+      }
+
+      return this.resultBuffer;
+    } catch (error) {
+      this.readStream?.close();
       this.resetParser();
+      this.resultBuffer = [];
+      this.readStream = null;
+      throw error;
     }
-    if (this.resultBuffer.length) {
-      yield this.resultBuffer.splice(0);
-    }
-
-    return this.resultBuffer;
   }
 
   private static sanitizeReadStreamOptions = (

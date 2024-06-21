@@ -19,7 +19,8 @@
   ],
   "scripts": {
     "build": "tsup",
-    "test": "ts-node tests/index.test.ts"
+    "test": "ts-node tests/index.test.ts",
+    "profile": "ts-node tests/perf.test.ts"
   },
   "keywords": [
     "json",
