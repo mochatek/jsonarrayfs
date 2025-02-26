@@ -31,13 +31,25 @@ npm install jsonarrayfs
 
 ```ts
 import { createReadStream } from "jsonarrayfs";
-// import fs from "fs";
 
 // Option 1: Create a streamer to read JSON array elements from a file
 const streamer = await createReadStream("./data.json", { encoding: "utf-8" });
 
-// Option 2: Pass an existing readStream
-// const streamer = await createReadStream(fs.createReadStream("./data.json", { encoding: "utf-8" }));
+// Option 2: Create a streamer to read JSON array elements from an existing Readable:
+
+// From a file
+import fs from "fs";
+const readStream = fs.createReadStream("./data.json", { encoding: "utf-8" });
+const streamer = await createReadStream(readStream);
+
+// From an API response
+import { ReadableStream } from "stream/web";
+import { Readable } from "stream";
+const response = await fetch("https://www.example.com/json-data");
+const readableStream = Readable.fromWeb(
+  response.body as unknown as ReadableStream
+);
+const streamer = await createReadStream(readableStream);
 
 // Stream JSON array elements in batches of 100
 for await (const chunk of streamer.stream(100)) {

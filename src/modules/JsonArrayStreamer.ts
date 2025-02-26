@@ -1,10 +1,11 @@
-import { ReadStream, createReadStream } from "fs";
+import { createReadStream } from "fs";
+import { Readable } from "stream";
 import { once } from "events";
 import type { ElementType, ReadStreamOptions } from "../index.types";
 import { CHARACTER, ERRORS } from "../constants";
 
 class JsonArrayStreamer<T> {
-  private readStream: ReadStream | null;
+  private readStream: Readable | null;
   private rootDetected: boolean;
   private elementDetected: boolean;
   private elementType: ElementType;
@@ -17,12 +18,9 @@ class JsonArrayStreamer<T> {
   private chunkBuffer: string;
   private resultBuffer: T[];
 
-  private constructor(readStream: ReadStream);
+  private constructor(readStream: Readable);
   private constructor(filePath: string, options?: ReadStreamOptions);
-  private constructor(
-    source: ReadStream | string,
-    options?: ReadStreamOptions
-  ) {
+  private constructor(source: Readable | string, options?: ReadStreamOptions) {
     this.readStream = JsonArrayStreamer.getReadStreamWithEncoding(
       source,
       options
@@ -201,7 +199,7 @@ class JsonArrayStreamer<T> {
         }
       }
 
-      this.readStream?.close();
+      this.readStream?.destroy();
       this.readStream = null;
 
       if (this.chunkBuffer.length) {
@@ -215,7 +213,7 @@ class JsonArrayStreamer<T> {
 
       return this.resultBuffer;
     } catch (error) {
-      this.readStream?.close();
+      this.readStream?.destroy();
       this.resetParser();
       this.resultBuffer = [];
       this.readStream = null;
@@ -237,11 +235,11 @@ class JsonArrayStreamer<T> {
   };
 
   private static getReadStreamWithEncoding = (
-    source: ReadStream | string,
+    source: Readable | string,
     options?: ReadStreamOptions
   ) => {
     const readStream =
-      source instanceof ReadStream
+      source instanceof Readable
         ? source
         : createReadStream(
             source,
@@ -256,18 +254,16 @@ class JsonArrayStreamer<T> {
     return readStream;
   };
 
-  public static create<T>(
-    readStream: ReadStream
-  ): Promise<JsonArrayStreamer<T>>;
+  public static create<T>(readStream: Readable): Promise<JsonArrayStreamer<T>>;
   public static create<T>(
     filePath: string,
     options?: ReadStreamOptions
   ): Promise<JsonArrayStreamer<T>>;
   public static async create<T>(
-    source: ReadStream | string,
+    source: Readable | string,
     options?: ReadStreamOptions
   ): Promise<JsonArrayStreamer<T>> {
-    const sourceIsReadableStream = source instanceof ReadStream;
+    const sourceIsReadableStream = source instanceof Readable;
     const instance = sourceIsReadableStream
       ? new JsonArrayStreamer<T>(source)
       : new JsonArrayStreamer<T>(source, options);
