@@ -17,10 +17,15 @@ class JsonArrayStreamer<T> {
   private chunkBuffer: string;
   private resultBuffer: T[];
 
-  private constructor(path: string, options?: ReadStreamOptions) {
-    this.readStream = createReadStream(
-      path,
-      JsonArrayStreamer.sanitizeReadStreamOptions(options)
+  private constructor(readStream: ReadStream);
+  private constructor(filePath: string, options?: ReadStreamOptions);
+  private constructor(
+    source: ReadStream | string,
+    options?: ReadStreamOptions
+  ) {
+    this.readStream = JsonArrayStreamer.getReadStreamWithEncoding(
+      source,
+      options
     );
     this.rootDetected = false;
     this.elementDetected = false;
@@ -222,9 +227,6 @@ class JsonArrayStreamer<T> {
     options?: Record<string, any>
   ) => {
     const sanitizedOptions = { ...(options || {}) };
-    if (!sanitizedOptions.encoding) {
-      sanitizedOptions.encoding = "utf-8";
-    }
     Object.keys(sanitizedOptions).forEach((key) => {
       if (!["signal", "encoding", "highWatermark"].includes(key)) {
         delete sanitizedOptions[key];
@@ -234,14 +236,48 @@ class JsonArrayStreamer<T> {
     return sanitizedOptions as ReadStreamOptions;
   };
 
-  public static create = async <T>(
-    path: string,
+  private static getReadStreamWithEncoding = (
+    source: ReadStream | string,
     options?: ReadStreamOptions
   ) => {
-    const instance = new JsonArrayStreamer<T>(path, options);
-    await once(instance.readStream!, "readable");
-    return instance;
+    const readStream =
+      source instanceof ReadStream
+        ? source
+        : createReadStream(
+            source,
+            JsonArrayStreamer.sanitizeReadStreamOptions(options)
+          );
+    if (!readStream.readableEncoding) {
+      console.warn(
+        "Warning: Encoding not specified. Defaulting to UTF-8 to prevent issues."
+      );
+      readStream.setEncoding("utf-8");
+    }
+    return readStream;
   };
+
+  public static create<T>(
+    readStream: ReadStream
+  ): Promise<JsonArrayStreamer<T>>;
+  public static create<T>(
+    filePath: string,
+    options?: ReadStreamOptions
+  ): Promise<JsonArrayStreamer<T>>;
+  public static async create<T>(
+    source: ReadStream | string,
+    options?: ReadStreamOptions
+  ): Promise<JsonArrayStreamer<T>> {
+    const sourceIsReadableStream = source instanceof ReadStream;
+    const instance = sourceIsReadableStream
+      ? new JsonArrayStreamer<T>(source)
+      : new JsonArrayStreamer<T>(source, options);
+
+    if (sourceIsReadableStream) {
+      await once(instance.readStream!, "readable");
+    }
+
+    return instance;
+  }
 }
 
 export default JsonArrayStreamer;
