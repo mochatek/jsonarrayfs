@@ -138,7 +138,7 @@ class JsonArrayStreamer<T> {
     }
   }
 
-  public async *stream(chunkSize: number, filter?: (element: T) => boolean) {
+  public async *batch(batchSize?: number, filter?: (element: T) => boolean) {
     try {
       characterStream: for await (const chunk of this.chunkGenerator()) {
         for (let char of chunk) {
@@ -190,9 +190,13 @@ class JsonArrayStreamer<T> {
 
             this.elementParser(char, filter);
 
-            if (this.resultBuffer.length === chunkSize) {
+            const targetSize = Math.max(
+              1,
+              batchSize || this.resultBuffer.length
+            );
+            if (this.resultBuffer.length === targetSize) {
               if (!this.readStream?.closed) this.readStream?.pause();
-              yield this.resultBuffer.splice(0, chunkSize);
+              yield this.resultBuffer.splice(0, targetSize);
               if (!this.readStream?.closed) this.readStream?.resume();
             }
           }

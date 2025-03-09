@@ -52,7 +52,7 @@ const readableStream = Readable.fromWeb(
 const streamer = await createReadStream(readableStream);
 
 // Stream JSON array elements in batches of 100
-for await (const chunk of streamer.stream(100)) {
+for await (const elements of streamer.batch(100)) {
   // Your processing logic here
 }
 ```
@@ -67,8 +67,8 @@ const streamer = await createReadStream<{ offer: boolean; price: number }>(
   { encoding: "utf-8" }
 );
 
-// Add filter to the stream to fetch only relevant elements
-for await (const chunk of streamer.stream(
+// Add filter to the batch to fetch only relevant elements
+for await (const elements of streamer.batch(
   100,
   (element) => element.price < 500 || element.offer
 )) {
