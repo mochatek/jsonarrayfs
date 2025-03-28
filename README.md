@@ -47,7 +47,7 @@ import { ReadableStream } from "stream/web";
 import { Readable } from "stream";
 const response = await fetch("https://www.example.com/json-data");
 const readableStream = Readable.fromWeb(
-  response.body as unknown as ReadableStream
+  response.body as unknown as ReadableStream,
 );
 const streamer = await createReadStream(readableStream);
 
@@ -64,13 +64,13 @@ import { createReadStream } from "jsonarrayfs";
 
 const streamer = await createReadStream<{ offer: boolean; price: number }>(
   "./data.json",
-  { encoding: "utf-8" }
+  { encoding: "utf-8" },
 );
 
 // Add filter to the batch to fetch only relevant elements
 for await (const elements of streamer.batch(
   100,
-  (element) => element.price < 500 || element.offer
+  (element) => element.price < 500 || element.offer,
 )) {
   // Your processing logic here
 }

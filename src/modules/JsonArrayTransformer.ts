@@ -20,7 +20,7 @@ class JsonArrayStreamer<T> extends Transform {
     });
     if (!sourceEncoding) {
       console.warn(
-        "Warning: Encoding not specified. Defaulting to UTF-8 to prevent issues."
+        "Warning: Encoding not specified. Defaulting to UTF-8 to prevent issues.",
       );
     }
     this.encoding = sourceEncoding || "utf-8";
@@ -116,12 +116,12 @@ class JsonArrayStreamer<T> extends Transform {
   _transform(
     chunk: Buffer,
     encoding: BufferEncoding,
-    callback: TransformCallback
+    callback: TransformCallback,
   ) {
     try {
       const decodedString = Buffer.from(
         chunk as unknown as string,
-        this.encoding
+        this.encoding,
       ).toString("utf-8");
       for (let char of decodedString) {
         if (!this.rootDetected) {
@@ -172,7 +172,7 @@ class JsonArrayStreamer<T> extends Transform {
       if (this.parsedElements.length) {
         callback(
           null,
-          this.parsedElements.splice(0, this.parsedElements.length)
+          this.parsedElements.splice(0, this.parsedElements.length),
         );
       } else {
         callback();

@@ -41,7 +41,7 @@ const appendToJsonArray = async (
       remainingDataBuffer,
       0,
       remainingDataBuffer.length,
-      insertPosition
+      insertPosition,
     );
 
     let insertData = data.map((datum) => JSON.stringify(datum)).join(",");
@@ -69,7 +69,7 @@ const appendToJsonArray = async (
 
     const newDataBuffer = Buffer.from(insertData, encoding);
     const writeBuffer = Buffer.alloc(
-      newDataBuffer.length + remainingDataBuffer.length
+      newDataBuffer.length + remainingDataBuffer.length,
     );
     newDataBuffer.copy(writeBuffer);
     remainingDataBuffer.copy(writeBuffer, newDataBuffer.length);

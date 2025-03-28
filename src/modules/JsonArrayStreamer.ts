@@ -23,7 +23,7 @@ class JsonArrayStreamer<T> {
   private constructor(source: Readable | string, options?: ReadStreamOptions) {
     this.readStream = JsonArrayStreamer.getReadStreamWithEncoding(
       source,
-      options
+      options,
     );
     this.rootDetected = false;
     this.elementDetected = false;
@@ -95,7 +95,7 @@ class JsonArrayStreamer<T> {
 
   private primitiveElementParser(
     char: string,
-    filter?: (element: T) => boolean
+    filter?: (element: T) => boolean,
   ) {
     if (char === CHARACTER.COMMA) {
       const element = <T>this.getParsedElement();
@@ -108,7 +108,7 @@ class JsonArrayStreamer<T> {
 
   private containerElementParser(
     char: string,
-    filter?: (element: T) => boolean
+    filter?: (element: T) => boolean,
   ) {
     const ENCLOSURE =
       this.elementType === "array" ? CHARACTER.BRACKET : CHARACTER.BRACE;
@@ -192,7 +192,7 @@ class JsonArrayStreamer<T> {
 
             const targetSize = Math.max(
               1,
-              batchSize || this.resultBuffer.length
+              batchSize || this.resultBuffer.length,
             );
             if (this.resultBuffer.length === targetSize) {
               if (!this.readStream?.closed) this.readStream?.pause();
@@ -226,7 +226,7 @@ class JsonArrayStreamer<T> {
   }
 
   private static sanitizeReadStreamOptions = (
-    options?: Record<string, any>
+    options?: Record<string, any>,
   ) => {
     const sanitizedOptions = { ...(options || {}) };
     Object.keys(sanitizedOptions).forEach((key) => {
@@ -240,18 +240,18 @@ class JsonArrayStreamer<T> {
 
   private static getReadStreamWithEncoding = (
     source: Readable | string,
-    options?: ReadStreamOptions
+    options?: ReadStreamOptions,
   ) => {
     const readStream =
       source instanceof Readable
         ? source
         : createReadStream(
             source,
-            JsonArrayStreamer.sanitizeReadStreamOptions(options)
+            JsonArrayStreamer.sanitizeReadStreamOptions(options),
           );
     if (!readStream.readableEncoding) {
       console.warn(
-        "Warning: Encoding not specified. Defaulting to UTF-8 to prevent issues."
+        "Warning: Encoding not specified. Defaulting to UTF-8 to prevent issues.",
       );
       readStream.setEncoding("utf-8");
     }
@@ -261,11 +261,11 @@ class JsonArrayStreamer<T> {
   public static create<T>(readStream: Readable): Promise<JsonArrayStreamer<T>>;
   public static create<T>(
     filePath: string,
-    options?: ReadStreamOptions
+    options?: ReadStreamOptions,
   ): Promise<JsonArrayStreamer<T>>;
   public static async create<T>(
     source: Readable | string,
-    options?: ReadStreamOptions
+    options?: ReadStreamOptions,
   ): Promise<JsonArrayStreamer<T>> {
     const sourceIsReadableStream = source instanceof Readable;
     const instance = sourceIsReadableStream
