@@ -2,7 +2,7 @@ import { createReadStream } from "fs";
 import { Readable } from "stream";
 import { once } from "events";
 import type { ElementType, ReadStreamOptions } from "../index.types";
-import { CHARACTER, ERRORS } from "../constants";
+import { CHARACTER, ERRORS, WHITESPACE_CHARACTERS } from "../constants";
 
 class JsonArrayStreamer<T> {
   private readStream: Readable | null;
@@ -40,7 +40,7 @@ class JsonArrayStreamer<T> {
     if (!this.readStream) throw new Error("Stream not initialized");
 
     for await (const chunk of this.readStream) {
-      yield chunk;
+      yield chunk as string;
     }
   }
 
@@ -144,11 +144,7 @@ class JsonArrayStreamer<T> {
         for (let char of chunk) {
           if (!this.rootDetected) {
             if (
-              ![
-                CHARACTER.SPACE,
-                CHARACTER.NEW_LINE,
-                CHARACTER.BRACKET.OPEN,
-              ].includes(char)
+              ![...WHITESPACE_CHARACTERS, CHARACTER.BRACKET.OPEN].includes(char)
             )
               throw new Error(ERRORS.INVALID_FILE);
 
@@ -159,11 +155,7 @@ class JsonArrayStreamer<T> {
           if (!this.elementDetected) {
             if (char === CHARACTER.BRACKET.CLOSE) break characterStream;
 
-            this.elementDetected = ![
-              CHARACTER.SPACE,
-              CHARACTER.COMMA,
-              CHARACTER.NEW_LINE,
-            ].includes(char);
+            this.elementDetected = !WHITESPACE_CHARACTERS.includes(char);
           }
 
           if (this.elementDetected) {

@@ -1,5 +1,5 @@
 import { Transform, TransformCallback } from "stream";
-import { CHARACTER } from "../constants";
+import { CHARACTER, WHITESPACE_CHARACTERS } from "../constants";
 
 class JsonArrayStreamer<T> extends Transform {
   private encoding: BufferEncoding;
@@ -126,11 +126,7 @@ class JsonArrayStreamer<T> extends Transform {
       for (let char of decodedString) {
         if (!this.rootDetected) {
           if (
-            ![
-              CHARACTER.SPACE,
-              CHARACTER.NEW_LINE,
-              CHARACTER.BRACKET.OPEN,
-            ].includes(char)
+            ![...WHITESPACE_CHARACTERS, CHARACTER.BRACKET.OPEN].includes(char)
           ) {
             throw new Error("Invalid file structure");
           }
@@ -141,11 +137,7 @@ class JsonArrayStreamer<T> extends Transform {
 
         if (!this.elementDetected) {
           if (char === CHARACTER.BRACKET.CLOSE) break;
-          this.elementDetected = ![
-            CHARACTER.SPACE,
-            CHARACTER.COMMA,
-            CHARACTER.NEW_LINE,
-          ].includes(char);
+          this.elementDetected = !WHITESPACE_CHARACTERS.includes(char);
         }
 
         if (this.elementDetected) {

@@ -1,5 +1,5 @@
 import { stat, open, FileHandle } from "fs/promises";
-import { CHARACTER, ERRORS } from "../constants";
+import { CHARACTER, ERRORS, WHITESPACE_CHARACTERS } from "../constants";
 
 const appendToJsonArray = async (
   filePath: string,
@@ -28,9 +28,7 @@ const appendToJsonArray = async (
           insertPosition +=
             i === 0 ? 0 : Buffer.byteLength(windowValue.slice(0, i), encoding);
           break searchForArrayEnd;
-        } else if (
-          ![CHARACTER.NEW_LINE, CHARACTER.SPACE].includes(windowValue[i])
-        ) {
+        } else if (!WHITESPACE_CHARACTERS.includes(windowValue[i])) {
           throw new Error(ERRORS.INVALID_FILE);
         }
       }
@@ -55,7 +53,7 @@ const appendToJsonArray = async (
         const windowValue = window.toString(encoding);
 
         for (let i = windowValue.length - 1; i >= 0; i--) {
-          if (![CHARACTER.NEW_LINE, CHARACTER.SPACE].includes(windowValue[i])) {
+          if (!WHITESPACE_CHARACTERS.includes(windowValue[i])) {
             if (windowValue[i] !== CHARACTER.BRACKET.OPEN) {
               insertData = `,${insertData}`;
             }
