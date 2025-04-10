@@ -1,6 +1,6 @@
 {
   "name": "jsonarrayfs",
-  "version": "1.2.1",
+  "version": "2.0.0",
   "description": "Specialized Node.js library for memory-efficient operations on JSON arrays. Stream individual elements from large JSON arrays (files, network responses etc.) and append elements to array files without loading the entire array into memory. Perfect for processing large-scale JSON array datasets without memory limitations.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
