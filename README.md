@@ -5,11 +5,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Coverage](https://img.shields.io/badge/coverage-96.88%25-brightgreen)
 
-Specialized Node.js library for memory-efficient operations on JSON array files. Stream individual elements from large JSON array files and append new elements without loading the entire array into memory. Perfect for processing large-scale JSON array datasets without memory limitations.
+Specialized Node.js library for memory-efficient operations on JSON arrays. Stream individual elements from large JSON arrays (files, network responses etc.) and append elements to array files without loading the entire array into memory. Perfect for processing large-scale JSON array datasets without memory limitations.
 
 ## Why Use This?
 
-- 🎯 **Specialized**: Purpose-built for JSON array files
+- 🎯 **Specialized**: Purpose-built for JSON arrays
 - 💾 **Memory Efficient**: Process arrays of any size without loading them entirely
 - ⚡ **High Performance**: Optimized streaming and batch operations
 - ✍️ **Direct Updates**: Append elements without rewriting the entire file
@@ -21,76 +21,90 @@ Specialized Node.js library for memory-efficient operations on JSON array files.
 npm install jsonarrayfs
 ```
 
-## Usage
+## Examples
+
+### 1. Stream from File
+
+Processs a large JSON array file (e.g., application logs) without loading it into memory:
 
 ```typescript
-import { JsonArrayStream, appendToJsonArrayFile } from "jsonarrayfs";
+import { JsonArrayStream } from "jsonarrayfs";
 import { createReadStream } from "node:fs";
-import { Transform } from "node:stream";
 
-// Process a large application log file (10GB+ JSON array)
+// Analyze logs: Count errors and slow responses
 const fileStream = createReadStream("app.log.json");
 const arrayStream = new JsonArrayStream("utf8");
 
-// Analyze logs: Count errors and slow responses
 let errorCount = 0;
 let slowResponses = 0;
 
 for await (const log of fileStream.pipe(arrayStream)) {
   if (log !== JsonArrayStream.NULL) {
-    if (log.level === "error") {
-      errorCount++;
-      console.error(`Error in ${log.service}: ${log.message}`);
-    }
-
-    if (log.responseTime > 1000) {
-      slowResponses++;
-      console.warn(`Slow response: ${log.path} (${log.responseTime}ms)`);
-    }
+    if (log.level === "error") errorCount++;
+    if (log.responseTime > 1000) slowResponses++;
   }
 }
 
 console.log(
-  `Analysis complete: ${errorCount} errors, ${slowResponses} slow responses`,
+  `Analysis complete: Found ${errorCount} errors, ${slowResponses} slow responses`,
 );
+```
+
+### 2. Stream from Network
+
+Process a JSON array from an API response:
+
+```typescript
+import { JsonArrayStream } from "jsonarrayfs";
+import { get } from "node:https";
+
+get("https://api.example.com/json-array-data", (res) => {
+  const arrayStream = new JsonArrayStream("utf8");
+
+  res.pipe(arrayStream).on("data", (item) => {
+    console.log(`Got item: ${item === JsonArrayStream.NULL ? null : item}`);
+  });
+});
+```
+
+### 3. Append to File
+
+Append new elements to an existing JSON array file:
+
+```typescript
+import { JsonArrayStream, appendToJsonArrayFile } from "jsonarrayfs";
 
 // Append new log entries
 const newLogs = [
   {
     timestamp: Date.now(),
     level: "info",
-    service: "auth",
-    path: "/api/login",
-    responseTime: 245,
     message: "User login successful",
+    responseTime: 245,
   },
   {
     timestamp: Date.now(),
     level: "info",
-    service: "auth",
-    path: "/api/login",
-    responseTime: 1245,
     message: "User login successful",
+    responseTime: 1245,
   },
   null,
   {
     timestamp: Date.now(),
     level: "error",
-    service: "payment",
-    path: "/api/checkout",
-    responseTime: 1532,
     message: "Database connection timeout",
+    responseTime: 1532,
   },
 ];
 
 await appendToJsonArrayFile("app.log.json", "utf8", ...newLogs);
 ```
 
-## API
+## API Reference
 
-### JsonArrayStream
+### `JsonArrayStream`
 
-A transform stream that reads JSON array files and emits elements one by one for efficient processing. When processing arrays containing `null` values, it uses a special sentinel value (`JsonArrayStream.NULL`) to distinguish between JSON `null` and stream EOF.
+A transform stream that parses JSON array elements one by one for efficient processing. When processing arrays containing `null` values, it uses a special sentinel value (`JsonArrayStream.NULL`) to distinguish between JSON `null` and stream EOF.
 
 #### Constructor
 
@@ -100,7 +114,7 @@ new JsonArrayStream(encoding?: string)
 
 ##### Parameters
 
-- `encoding` (string, optional): File encoding (default: 'utf8')
+- `encoding` (string, optional): Content encoding (default: 'utf8')
 
 #### Properties
 
@@ -111,7 +125,7 @@ new JsonArrayStream(encoding?: string)
 - `data`: Emitted for each array element
 - `error`: Emitted when parsing fails or input is invalid
 
-### appendToJsonArrayFile
+### `appendToJsonArrayFile`
 
 Appends elements to a JSON array file efficiently without loading the entire file into memory.
 
