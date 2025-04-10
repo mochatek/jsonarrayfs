@@ -1,100 +1,162 @@
-# jsonarrayfs <img alt="NPM Version" src="https://img.shields.io/npm/v/jsonarrayfs"> <img alt="Monthly Downloads" src="https://img.shields.io/npm/dm/jsonarrayfs" /> <img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/mochatek/jsonarrayfs/publish-to-npm.yml">
+# jsonarrayfs
 
-"jsonarrayfs" is a Node.js library crafted for robust and memory-efficient management of massive JSON array files. It enables seamless handling of JSON arrays without the need to load the entire file into memory, making it perfect for efficiently managing large datasets without overwhelming system resources.
+[![npm version](https://img.shields.io/npm/v/jsonarrayfs.svg)](https://www.npmjs.com/package/jsonarrayfs)
+[![npm downloads](https://img.shields.io/npm/dm/jsonarrayfs.svg)](https://www.npmjs.com/package/jsonarrayfs)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Coverage](https://img.shields.io/badge/coverage-96.88%25-brightgreen)
 
-## 🎯 Key Features
+Specialized Node.js library for memory-efficient operations on JSON array files. Stream individual elements from large JSON array files and append new elements without loading the entire array into memory. Perfect for processing large-scale JSON array datasets without memory limitations.
 
-- **Stream Processing**: Read JSON array in manageable chunks (eg: 50k elements at a time) using stream.
-- **On-the-Fly Filtering**: Apply filter to the stream to fetch only relevant data, reducing the data you handle even further.
-- **Direct Appends**: Append new elements directly to the JSON array file, avoiding unnecessary loading, modification and rewriting.
-- **Formatting Flexibility**: Works regardless of whether the JSON file is formatted with proper indentation or not.
-- **Handles Mixed Types**: Can handle JSON arrays containing both uniform and mixed types of elements.
+## Why Use This?
 
-## 💡 Benefits
+- 🎯 **Specialized**: Purpose-built for JSON array files
+- 💾 **Memory Efficient**: Process arrays of any size without loading them entirely
+- ⚡ **High Performance**: Optimized streaming and batch operations
+- ✍️ **Direct Updates**: Append elements without rewriting the entire file
+- 🔄 **Format Agnostic**: Works with any valid JSON array structure
 
-- **Memory Optimization**: Process JSON array files with minimal memory usage, making it ideal for resource-constrained environments.
-- **Handles Large Datasets**: Efficiently manage massive JSON array files without memory limitations.
-- **Improved Performance**: Faster processing times due to efficient streaming, filtering and appending capabilities.
-- **Enhanced Scalability**: Scales seamlessly with growing datasets, ensuring smooth performance.
+## Installation
 
-## ⚙️ Installation
-
-To install jsonarrayfs, use:
-
-```sh
+```bash
 npm install jsonarrayfs
 ```
 
-## 🚀 Usage
+## Usage
 
-- Stream Processing:
+```typescript
+import { JsonArrayStream, appendToJsonArrayFile } from "jsonarrayfs";
+import { createReadStream } from "node:fs";
+import { Transform } from "node:stream";
 
-```ts
-import { createReadStream } from "jsonarrayfs";
+// Process a large application log file (10GB+ JSON array)
+const fileStream = createReadStream("app.log.json");
+const arrayStream = new JsonArrayStream("utf8");
 
-// Option 1: Create a streamer to read JSON array elements from a file
-const streamer = await createReadStream("./data.json", { encoding: "utf-8" });
+// Analyze logs: Count errors and slow responses
+let errorCount = 0;
+let slowResponses = 0;
 
-// Option 2: Create a streamer to read JSON array elements from an existing Readable:
+for await (const log of fileStream.pipe(arrayStream)) {
+  if (log !== JsonArrayStream.NULL) {
+    if (log.level === "error") {
+      errorCount++;
+      console.error(`Error in ${log.service}: ${log.message}`);
+    }
 
-// From a file
-import fs from "fs";
-const readStream = fs.createReadStream("./data.json", { encoding: "utf-8" });
-const streamer = await createReadStream(readStream);
-
-// From an API response
-import { ReadableStream } from "stream/web";
-import { Readable } from "stream";
-const response = await fetch("https://www.example.com/json-data");
-const readableStream = Readable.fromWeb(
-  response.body as unknown as ReadableStream,
-);
-const streamer = await createReadStream(readableStream);
-
-// Stream JSON array elements in batches of 100
-for await (const elements of streamer.batch(100)) {
-  // Your processing logic here
+    if (log.responseTime > 1000) {
+      slowResponses++;
+      console.warn(`Slow response: ${log.path} (${log.responseTime}ms)`);
+    }
+  }
 }
-```
 
-- On-the-Fly Filtering:
-
-```ts
-import { createReadStream } from "jsonarrayfs";
-
-const streamer = await createReadStream<{ offer: boolean; price: number }>(
-  "./data.json",
-  { encoding: "utf-8" },
+console.log(
+  `Analysis complete: ${errorCount} errors, ${slowResponses} slow responses`,
 );
 
-// Add filter to the batch to fetch only relevant elements
-for await (const elements of streamer.batch(
-  100,
-  (element) => element.price < 500 || element.offer,
-)) {
-  // Your processing logic here
-}
-```
-
-- Append data to existing JSON array:
-
-```ts
-import { appendFile } from "jsonarrayfs";
-
-// Simulate new data to append
-const newData = [
-  { id: 1, name: "Earth", price: 1000, offer: true },
-  { id: 2, name: "Moon", price: 500, offer: false },
+// Append new log entries
+const newLogs = [
+  {
+    timestamp: Date.now(),
+    level: "info",
+    service: "auth",
+    path: "/api/login",
+    responseTime: 245,
+    message: "User login successful",
+  },
+  {
+    timestamp: Date.now(),
+    level: "info",
+    service: "auth",
+    path: "/api/login",
+    responseTime: 1245,
+    message: "User login successful",
+  },
+  null,
+  {
+    timestamp: Date.now(),
+    level: "error",
+    service: "payment",
+    path: "/api/checkout",
+    responseTime: 1532,
+    message: "Database connection timeout",
+  },
 ];
 
-// Append new data to the existing JSON array file
-await appendFile("./data.json", "utf-8", ...newData);
+await appendToJsonArrayFile("app.log.json", "utf8", ...newLogs);
 ```
 
-## 🤝 Contributing
+## API
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+### JsonArrayStream
 
-## 📜 License
+A transform stream that reads JSON array files and emits elements one by one for efficient processing. When processing arrays containing `null` values, it uses a special sentinel value (`JsonArrayStream.NULL`) to distinguish between JSON `null` and stream EOF.
 
-[MIT License ](https://github.com/mochatek/jsonarrayfs/blob/main/LICENSE)
+#### Constructor
+
+```typescript
+new JsonArrayStream(encoding?: string)
+```
+
+##### Parameters
+
+- `encoding` (string, optional): File encoding (default: 'utf8')
+
+#### Properties
+
+- `JsonArrayStream.NULL`: Special sentinel value to distinguish between JSON `null` and stream EOF
+
+#### Events
+
+- `data`: Emitted for each array element
+- `error`: Emitted when parsing fails or input is invalid
+
+### appendToJsonArrayFile
+
+Appends elements to a JSON array file efficiently without loading the entire file into memory.
+
+#### Signature
+
+```typescript
+async function appendToJsonArrayFile(
+  filePath: string,
+  encoding?: string,
+  ...elements: any[]
+): Promise<void>;
+```
+
+#### Parameters
+
+- `filePath` (string): Path to the JSON array file
+- `encoding` (string, optional): File encoding (default: 'utf8')
+- `...elements` (any[]): Elements to append to the array
+
+#### Returns
+
+Promise that resolves when the append operation is complete.
+
+## Error Handling
+
+The library can throw these errors:
+
+### `JsonArrayStreamError`
+
+- Invalid JSON array format
+- Malformed array elements
+- Unexpected end of input
+
+### `JsonArrayAppendError`
+
+- Invalid JSON array format
+- File system errors
+- Permission issues
+- Invalid input elements
+
+## Requirements
+
+- Node.js >= 16.0.0
+- Input file must be a valid JSON array
+
+## License
+
+MIT License - see the [LICENSE](LICENSE) file for details
